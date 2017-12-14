@@ -15,6 +15,8 @@ public class TrackSpawner : MonoBehaviour {
 
 	public float spread=10f;
 
+	public GameObject platformPrefab;
+
 	private void Start()
 	{
 		currentAngle = Random.Range(minAngle, maxAngle);
@@ -68,19 +70,34 @@ public class TrackSpawner : MonoBehaviour {
 
 
 		//Debug.DrawLine(center, transform.position, Color.yellow, 100);
-		int segments = 10;
+		float segments = 10;
+
+		Vector3 startPoint = transform.position;
 
 		Vector3 pointA = transform.position;
 		Vector3 pointB = transform.position;
+		Vector3 backgroundDir = Vector3.Cross(up*sign, forward);
+		Vector3 radialDir = (forward * Mathf.Sin(0 * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(0 * angle * Mathf.Deg2Rad)) * radius;
+		Vector3 previousRadialDir = radialDir;
 
 		for (float alpha = 0; alpha < 1f; alpha += 1f / segments)
 		{
 			pointB = pointA;
-			pointA = center + (forward * Mathf.Sin(alpha * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(alpha * angle * Mathf.Deg2Rad)) * radius;
+			previousRadialDir = radialDir;
+			radialDir = (forward * Mathf.Sin(alpha * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(alpha * angle * Mathf.Deg2Rad)) * radius;
+			pointA = center + radialDir;
 			Debug.DrawLine(pointA, pointB, Color.red, 100);
+			var size = angle / segments * Mathf.Deg2Rad * radius;
+			var newPlatform = Instantiate(platformPrefab, (pointB + pointA) / 2f, Quaternion.LookRotation(backgroundDir, (radialDir+previousRadialDir)/2f));
+			newPlatform.transform.localScale = new Vector3(size, newPlatform.transform.localScale.y, newPlatform.transform.localScale.z);
 		}
 
-		transform.position = pointA;
-		transform.LookAt(transform.position + Vector3.Cross(up*sign, forward), center - pointA);
+		Vector3 endPoint = pointA;
+
+		transform.position = endPoint;
+		Vector3 middleDir = (forward * Mathf.Sin(0.5f * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(0.5f * angle * Mathf.Deg2Rad)) * radius;
+
+		transform.LookAt(transform.position + backgroundDir, center - pointA);
+		//Instantiate(platformPrefab, (startPoint + endPoint) / 2f, Quaternion.LookRotation(backgroundDir, middleDir));
 	}
 }
