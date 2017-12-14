@@ -10,11 +10,26 @@ public class TrackSpawner : MonoBehaviour {
 	public float minRadius=5, maxRadius=50;
 	public float minAngle=5, maxAngle=45;
 
+	float currentRadius=0;
+	float currentAngle=0;
+
+	public float spread=10f;
+
+	private void Start()
+	{
+		currentAngle = Random.Range(minAngle, maxAngle);
+		currentRadius = Random.Range(5, 50);
+	}
+
 	void Update()
 	{
-		float sign=1;
-		GenerateTrack(Random.Range(5, 50) * sign, Random.Range(5, 45));
-		sign *= -1;
+
+		GenerateTrack(currentRadius, currentAngle);
+
+		currentAngle = Random.Range(minAngle, maxAngle);
+		currentRadius *= Random.Range(0.5f, 1.5f);
+
+		currentRadius = Mathf.Clamp(currentRadius, minRadius, maxRadius);
 	}
 	
 	void GenerateTrack(float radius, float angle)
@@ -37,6 +52,21 @@ public class TrackSpawner : MonoBehaviour {
 			center = centerDown;
 		}
 
+		if (Mathf.Abs(transform.position.y)/ spread > Random.value)
+		{
+			if (Mathf.Abs(upEndPoint.y) < Mathf.Abs(downEndPoint.y))
+			{
+				sign = 1;
+				center = centerUp;
+			}
+			else
+			{
+				sign = -1;
+				center = centerDown;
+			}
+		}
+
+
 		//Debug.DrawLine(center, transform.position, Color.yellow, 100);
 		int segments = 10;
 
@@ -47,7 +77,6 @@ public class TrackSpawner : MonoBehaviour {
 		{
 			pointB = pointA;
 			pointA = center + (forward * Mathf.Sin(alpha * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(alpha * angle * Mathf.Deg2Rad)) * radius;
-			Debug.Log(pointA+" - "+alpha);
 			Debug.DrawLine(pointA, pointB, Color.red, 100);
 		}
 
