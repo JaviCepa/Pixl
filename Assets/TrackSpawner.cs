@@ -86,7 +86,7 @@ public class TrackSpawner : MonoBehaviour {
 		}
 
 
-		float segments = 20;
+		float segments = 20f;
 
 		Vector3 pointA = transform.position;
 		Vector3 pointB = transform.position;
