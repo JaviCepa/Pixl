@@ -9,6 +9,7 @@ public class CameraMovement : MonoBehaviour {
 	Vector3 startPosition;
 
 	float offsetX, offsetY;
+	public float cameraSpeed=0.05f;
 
 	void Awake()
 	{
@@ -40,10 +41,9 @@ public class CameraMovement : MonoBehaviour {
 				float totalWeight = 0;
 				for (int i = 0; i < playerControllers.Length; i++)
 				{
-					if (playerControllers[i].transform.position.y > -10)
+					if (playerControllers[i].transform.position.y > -10 && playerControllers[i].transform.position.x > average.x)
 					{
-						var currentWeight = (playerControllers[i].transform.position - average).magnitude + 1;
-						currentWeight = 1f / currentWeight;
+						var currentWeight = Mathf.Max(playerControllers[i].transform.position.x*playerControllers[i].transform.position.x, 1);
 						weightedAverage += playerControllers[i].transform.position * currentWeight;
 						totalWeight += currentWeight;
 					}
@@ -59,7 +59,7 @@ public class CameraMovement : MonoBehaviour {
 
 				var targetPosition = new Vector3(weightedAverage.x + offsetX, weightedAverage.y + offsetY, startPosition.z);
 				var error = targetPosition - transform.position;
-				transform.position += error * 0.01f;
+				transform.position += error * cameraSpeed;
 			}
 		}
 	}

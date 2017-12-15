@@ -24,8 +24,7 @@ public class PlayerController : MonoBehaviour {
 	public float power=700;
 	public float airPower=50;
 	public float fallSpeed=10;
-
-	float jumpTime=0.5f;
+	public float jumpPower=10;
 
 	private Rigidbody rb;
 	private AudioSource aus;
@@ -47,9 +46,9 @@ public class PlayerController : MonoBehaviour {
 			rb.useGravity = true;
 			rb.maxAngularVelocity = maxAngularSpeed;
 
-			if (Input.GetKeyDown(accelKey) && alive && grounded && railStatus == RailStatus.OnTrack)
+			if (Input.GetKeyDown(accelKey) && alive && grounded && railStatus == RailStatus.OnTrack && rb.velocity.y < jumpPower*0.5f)
 			{
-				rb.AddForce(0, +500f, 0);
+				rb.velocity += new Vector3(0, jumpPower, 0);
 				grounded = false;
 				aus.clip = Jump;
 				aus.Play();
@@ -57,44 +56,12 @@ public class PlayerController : MonoBehaviour {
 
 			if (Input.GetKey(railLeftKey) && readyToRailChange && railStatus == RailStatus.OnTrack && rail > 0 && alive)
 			{
-				readyToRailChange = false;
-				grounded = false;
-				var saveSpeed = rb.velocity;
-				var saveAngular = rb.angularVelocity;
-				rb.isKinematic = true;
-				railStatus = RailStatus.Jumping;
-				aus.clip = Jump;
-				aus.Play();
-				var sequence = DOTween.Sequence();
-				sequence.Append(transform.DOMoveY(transform.position.y + 1f, 0.5f * jumpTime).SetEase(Ease.OutQuad));
-				sequence.Append(transform.DOMoveY(transform.position.y, 0.5f * jumpTime).SetEase(Ease.InQuad));
-				sequence.AppendCallback(() => rail--);
-				sequence.AppendCallback(() => { rb.isKinematic = false; railStatus = RailStatus.OnTrack; });
-				sequence.AppendCallback(() => { rb.velocity = saveSpeed + Vector3.down*fallSpeed; rb.angularVelocity = saveAngular; });
-				sequence.Insert(0, transform.DOMoveZ(2f, 1f * jumpTime).SetEase(Ease.Linear).SetRelative(true));
-				sequence.Insert(0, transform.DOMoveX(transform.position.x + jumpTime * saveSpeed.x, 1f * jumpTime).SetEase(Ease.Linear));
-				sequence.Insert(0, transform.DORotate(Vector3.right * 180f, 1f * jumpTime, RotateMode.WorldAxisAdd).SetEase(Ease.InOutSine).SetRelative(true));
+				ChangeRail(1);
 			};
 	
 			if (Input.GetKey(railRightKey) && readyToRailChange && railStatus == RailStatus.OnTrack && rail < 4 && alive)
 			{
-				readyToRailChange = false;
-				grounded = false;
-				var saveSpeed = rb.velocity;
-				var saveAngular = rb.angularVelocity;
-				rb.isKinematic = true;
-				railStatus = RailStatus.Jumping;
-				aus.clip=Jump;
-				aus.Play();
-				var sequence = DOTween.Sequence();
-				sequence.Append(transform.DOMoveY(transform.position.y + 1f, 0.5f * jumpTime).SetEase(Ease.OutQuad));
-				sequence.Append(transform.DOMoveY(transform.position.y, 0.5f * jumpTime).SetEase(Ease.InQuad));
-				sequence.AppendCallback(() => rail++);
-				sequence.AppendCallback(() => { rb.isKinematic = false; railStatus = RailStatus.OnTrack; });
-				sequence.AppendCallback(() => { rb.velocity = saveSpeed + Vector3.down * fallSpeed; rb.angularVelocity = saveAngular; });
-				sequence.Insert(0, transform.DOMoveZ(-2f, 1f * jumpTime).SetEase(Ease.Linear).SetRelative(true));
-				sequence.Insert(0, transform.DOMoveX(transform.position.x + jumpTime * saveSpeed.x, 1f * jumpTime).SetEase(Ease.Linear));
-				sequence.Insert(0, transform.DORotate(Vector3.left * 180f, 1f * jumpTime, RotateMode.WorldAxisAdd).SetEase(Ease.InOutSine).SetRelative(true));
+				ChangeRail(-1);
 			};
 			
 			//if (Input.GetKey(brakeKey) && alive) {
@@ -104,7 +71,7 @@ public class PlayerController : MonoBehaviour {
 
 			if (alive) {
 				rb.AddForce(airPower, 0, 0);
-				rb.AddTorque(0, 0, -power);
+				rb.AddTorque(0, 0, -power*transform.localScale.x*2f);
 			};
 		}
 		
@@ -136,6 +103,43 @@ public class PlayerController : MonoBehaviour {
 		if ((transform.position.y<-10 || transform.position.x<-11) && alive)
 		{
 			Kill();
+		}
+	}
+
+	void ChangeRail(int direction) {
+		float maxUp = 1f;
+		float maxDist = 10f;
+		Ray ray = new Ray(transform.position + Vector3.forward * 2 * direction + Vector3.up * maxUp, Vector3.down);
+		RaycastHit hit;
+		bool success = Physics.Raycast(ray, out hit, maxDist);
+		Debug.DrawLine(ray.origin, success ? hit.point : ray.origin+ ray.direction*maxDist, success ? Color.green : Color.cyan, 100);
+		if (success)
+		{
+			readyToRailChange = false;
+			grounded = false;
+			var saveSpeed = rb.velocity;
+			var saveAngular = rb.angularVelocity;
+			rb.isKinematic = true;
+			railStatus = RailStatus.Jumping;
+			aus.clip = Jump;
+			aus.Play();
+
+			var sequence = DOTween.Sequence();
+			float animationSpeedFactor=0.15f;
+			float apexHeight=Mathf.Max(hit.point.y + 2f, transform.position.y+2);
+			float jumpHeight=apexHeight-transform.position.y;
+			float jumpUpTime=jumpHeight*animationSpeedFactor;
+			float jumpDownTime=(apexHeight - hit.point.y)*animationSpeedFactor;
+			float jumpTime=jumpUpTime+jumpDownTime;
+			sequence.Append(transform.DOMoveY(apexHeight, jumpUpTime).SetEase(Ease.OutQuad));
+			sequence.Append(transform.DOMoveY(hit.point.y + 0.5f, jumpDownTime).SetEase(Ease.InQuad));
+
+			sequence.AppendCallback(() => rail-=direction);
+			sequence.AppendCallback(() => { rb.isKinematic = false; railStatus = RailStatus.OnTrack; });
+			sequence.AppendCallback(() => { rb.velocity = saveSpeed + Vector3.down * fallSpeed; rb.angularVelocity = saveAngular; });
+			sequence.Insert(0, transform.DOMoveZ(2f * direction, jumpTime).SetEase(Ease.InOutQuad).SetRelative(true));
+			sequence.Insert(0, transform.DORotate(Vector3.right * 180f * direction, jumpTime, RotateMode.WorldAxisAdd).SetEase(Ease.OutBack).SetRelative(true));
+			sequence.Insert(0, transform.DOMoveX(transform.position.x + jumpTime * saveSpeed.x, jumpTime).SetEase(Ease.Linear));
 		}
 	}
 	

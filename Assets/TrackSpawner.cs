@@ -51,6 +51,7 @@ public class TrackSpawner : MonoBehaviour {
 	{
 		var previouslyActive = active;
 		active = (transform.position.y >= -3);
+		if (Random.value < 0.05f) { active = false; } //Make some segments randomly dissapear
 
 		Vector3 centerUp = transform.position - up * radius;
 		Vector3 centerDown = transform.position + up * radius;
