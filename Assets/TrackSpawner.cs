@@ -8,7 +8,9 @@ public class TrackSpawner : MonoBehaviour {
 	Vector3 up { get { return transform.up; } }
 
 	public float minRadius=5, maxRadius=50;
-	public float minAngle=5, maxAngle=45;
+	public float minAngle=5;
+
+	float maxAngle;
 
 	float currentRadius=0;
 	float currentAngle=0;
@@ -16,26 +18,40 @@ public class TrackSpawner : MonoBehaviour {
 	public float spread=10f;
 
 	public GameObject platformPrefab;
+	public GameObject platformEndPrefab;
+
+	public Material material;
+
+	public Transform targetTransform;
+
+	bool active = true;
 
 	private void Start()
 	{
-		currentAngle = Random.Range(minAngle, maxAngle);
-		currentRadius = Random.Range(5, 50);
+		maxAngle = Random.Range(15f, 45f);
+		currentAngle = minAngle;
+		currentRadius = maxRadius;
 	}
 
 	void Update()
 	{
 
-		GenerateTrack(currentRadius, currentAngle);
+		if (transform.position.x < targetTransform.position.x+100)
+		{
+			GenerateTrack(currentRadius, currentAngle);
 
-		currentAngle = Random.Range(minAngle, maxAngle);
-		currentRadius *= Random.Range(0.5f, 1.5f);
+			currentAngle = Random.Range(minAngle, maxAngle);
+			currentRadius *= Random.Range(0.25f, 1.75f);
 
-		currentRadius = Mathf.Clamp(currentRadius, minRadius, maxRadius);
+			currentRadius = Mathf.Clamp(currentRadius, minRadius, maxRadius);
+		}
 	}
 	
 	void GenerateTrack(float radius, float angle)
 	{
+		var previouslyActive = active;
+		active = (transform.position.y >= -3);
+
 		Vector3 centerUp = transform.position - up * radius;
 		Vector3 centerDown = transform.position + up * radius;
 		Vector3 upEndPoint = centerUp + (forward * Mathf.Sin(angle * Mathf.Deg2Rad) + up * Mathf.Cos(angle * Mathf.Deg2Rad)) * radius;
@@ -70,7 +86,7 @@ public class TrackSpawner : MonoBehaviour {
 
 
 		//Debug.DrawLine(center, transform.position, Color.yellow, 100);
-		float segments = 10;
+		float segments = 20;
 
 		Vector3 startPoint = transform.position;
 
@@ -87,17 +103,60 @@ public class TrackSpawner : MonoBehaviour {
 			radialDir = (forward * Mathf.Sin(alpha * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(alpha * angle * Mathf.Deg2Rad)) * radius;
 			pointA = center + radialDir;
 			Debug.DrawLine(pointA, pointB, Color.red, 100);
-			var size = angle / segments * Mathf.Deg2Rad * radius;
-			var newPlatform = Instantiate(platformPrefab, (pointB + pointA) / 2f, Quaternion.LookRotation(backgroundDir, (radialDir+previousRadialDir)/2f));
-			newPlatform.transform.localScale = new Vector3(size, newPlatform.transform.localScale.y, newPlatform.transform.localScale.z);
+			var size = angle / segments * Mathf.Deg2Rad * radius * 1.05f;
+
+			if (active)
+			{
+
+				var newPlatform = Instantiate(platformPrefab, (pointB + pointA) / 2f, Quaternion.LookRotation(backgroundDir, (radialDir+previousRadialDir)/2f));
+				foreach (var item in newPlatform.GetComponentsInChildren<MeshRenderer>())
+				{
+					item.material = material;
+				}
+
+				newPlatform.transform.localScale = new Vector3(size, newPlatform.transform.localScale.y, newPlatform.transform.localScale.z);
+
+				//CODE FOR PILLARS
+				//if (Random.value < 0.995f)
+				//{
+				//	newPlatform.transform.localScale = new Vector3(size, newPlatform.transform.localScale.y, newPlatform.transform.localScale.z);
+				//}
+				//else
+				//{
+				//	if (Random.value > 0.5f) {
+				//		newPlatform.transform.localScale = new Vector3(size, 200f, newPlatform.transform.localScale.z);
+				//	}
+				//	else
+				//	{
+				//		newPlatform.transform.localScale = new Vector3(size, newPlatform.transform.localScale.y, 200f);
+				//	}
+				//}
+
+			}
+		}
+
+		if (!active && previouslyActive)
+		{
+			var newPlatform = Instantiate(platformEndPrefab, startPoint, transform.rotation);
+			foreach (var item in newPlatform.GetComponentsInChildren<MeshRenderer>())
+			{
+				item.material = material;
+			}
 		}
 
 		Vector3 endPoint = pointA;
 
 		transform.position = endPoint;
-		Vector3 middleDir = (forward * Mathf.Sin(0.5f * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(0.5f * angle * Mathf.Deg2Rad)) * radius;
 
 		transform.LookAt(transform.position + backgroundDir, center - pointA);
-		//Instantiate(platformPrefab, (startPoint + endPoint) / 2f, Quaternion.LookRotation(backgroundDir, middleDir));
+
+		if (active && !previouslyActive)
+		{
+			var newPlatform = Instantiate(platformEndPrefab, startPoint, transform.rotation);
+			foreach (var item in newPlatform.GetComponentsInChildren<MeshRenderer>())
+			{
+				item.material = material;
+			}
+		}
 	}
 }
