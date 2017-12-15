@@ -1,0 +1,6 @@
+
+- Mover el input al Update y mantener la reacción en fixedupdate
+
+-
+
+
