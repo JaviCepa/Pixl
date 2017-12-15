@@ -10,7 +10,8 @@ public class PlayerController : MonoBehaviour {
 
 	private bool   alive = true;
 	private int    playerScore=0;
-	
+	private bool   readyToRailChange = false;
+
 	public  GameObject fader;
 	
 	public KeyCode railLeftKey;
@@ -22,6 +23,7 @@ public class PlayerController : MonoBehaviour {
 
 	public float power=700;
 	public float airPower=50;
+	public float fallSpeed=10;
 
 	float jumpTime=0.5f;
 
@@ -53,8 +55,9 @@ public class PlayerController : MonoBehaviour {
 				aus.Play();
 			}
 
-			if (Input.GetKey(railLeftKey) && grounded && railStatus == RailStatus.OnTrack && rail > 0 && alive)
+			if (Input.GetKey(railLeftKey) && readyToRailChange && railStatus == RailStatus.OnTrack && rail > 0 && alive)
 			{
+				readyToRailChange = false;
 				grounded = false;
 				var saveSpeed = rb.velocity;
 				var saveAngular = rb.angularVelocity;
@@ -67,14 +70,15 @@ public class PlayerController : MonoBehaviour {
 				sequence.Append(transform.DOMoveY(transform.position.y, 0.5f * jumpTime).SetEase(Ease.InQuad));
 				sequence.AppendCallback(() => rail--);
 				sequence.AppendCallback(() => { rb.isKinematic = false; railStatus = RailStatus.OnTrack; });
-				sequence.AppendCallback(() => { rb.velocity = saveSpeed; rb.angularVelocity = saveAngular; });
+				sequence.AppendCallback(() => { rb.velocity = saveSpeed + Vector3.down*fallSpeed; rb.angularVelocity = saveAngular; });
 				sequence.Insert(0, transform.DOMoveZ(2f, 1f * jumpTime).SetEase(Ease.Linear).SetRelative(true));
 				sequence.Insert(0, transform.DOMoveX(transform.position.x + jumpTime * saveSpeed.x, 1f * jumpTime).SetEase(Ease.Linear));
 				sequence.Insert(0, transform.DORotate(Vector3.right * 180f, 1f * jumpTime, RotateMode.WorldAxisAdd).SetEase(Ease.InOutSine).SetRelative(true));
 			};
 	
-			if (Input.GetKey(railRightKey) && grounded && railStatus == RailStatus.OnTrack && rail < 4 && alive)
+			if (Input.GetKey(railRightKey) && readyToRailChange && railStatus == RailStatus.OnTrack && rail < 4 && alive)
 			{
+				readyToRailChange = false;
 				grounded = false;
 				var saveSpeed = rb.velocity;
 				var saveAngular = rb.angularVelocity;
@@ -87,7 +91,7 @@ public class PlayerController : MonoBehaviour {
 				sequence.Append(transform.DOMoveY(transform.position.y, 0.5f * jumpTime).SetEase(Ease.InQuad));
 				sequence.AppendCallback(() => rail++);
 				sequence.AppendCallback(() => { rb.isKinematic = false; railStatus = RailStatus.OnTrack; });
-				sequence.AppendCallback(() => { rb.velocity = saveSpeed; rb.angularVelocity = saveAngular; });
+				sequence.AppendCallback(() => { rb.velocity = saveSpeed + Vector3.down * fallSpeed; rb.angularVelocity = saveAngular; });
 				sequence.Insert(0, transform.DOMoveZ(-2f, 1f * jumpTime).SetEase(Ease.Linear).SetRelative(true));
 				sequence.Insert(0, transform.DOMoveX(transform.position.x + jumpTime * saveSpeed.x, 1f * jumpTime).SetEase(Ease.Linear));
 				sequence.Insert(0, transform.DORotate(Vector3.left * 180f, 1f * jumpTime, RotateMode.WorldAxisAdd).SetEase(Ease.InOutSine).SetRelative(true));
@@ -150,6 +154,7 @@ public class PlayerController : MonoBehaviour {
 			aus.Play();
 			if (contact.point.y<transform.position.y) {
 				grounded=true;
+				readyToRailChange = true;
 			}
 		}
 	}

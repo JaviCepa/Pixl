@@ -26,7 +26,7 @@ public class CameraMovement : MonoBehaviour {
 			float count = 0;
 			for (int i = 0; i < playerControllers.Length; i++)
 			{
-				if (Mathf.Abs(playerControllers[i].transform.position.y) < 10)
+				if (playerControllers[i].transform.position.y > -10)
 				{
 					average += playerControllers[i].transform.position;
 					count++;
@@ -40,7 +40,7 @@ public class CameraMovement : MonoBehaviour {
 				float totalWeight = 0;
 				for (int i = 0; i < playerControllers.Length; i++)
 				{
-					if (Mathf.Abs(playerControllers[i].transform.position.y) < 10)
+					if (playerControllers[i].transform.position.y > -10)
 					{
 						var currentWeight = (playerControllers[i].transform.position - average).magnitude + 1;
 						currentWeight = 1f / currentWeight;

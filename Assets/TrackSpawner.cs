@@ -85,16 +85,16 @@ public class TrackSpawner : MonoBehaviour {
 		}
 
 
-		//Debug.DrawLine(center, transform.position, Color.yellow, 100);
 		float segments = 20;
-
-		Vector3 startPoint = transform.position;
 
 		Vector3 pointA = transform.position;
 		Vector3 pointB = transform.position;
 		Vector3 backgroundDir = Vector3.Cross(up*sign, forward);
 		Vector3 radialDir = (forward * Mathf.Sin(0 * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(0 * angle * Mathf.Deg2Rad)) * radius;
 		Vector3 previousRadialDir = radialDir;
+
+		float size = angle / segments * Mathf.Deg2Rad * radius * 1.05f;
+		Vector3 startPoint = transform.position-forward*size*0.5f;
 
 		for (float alpha = 0; alpha < 1f; alpha += 1f / segments)
 		{
@@ -103,11 +103,9 @@ public class TrackSpawner : MonoBehaviour {
 			radialDir = (forward * Mathf.Sin(alpha * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(alpha * angle * Mathf.Deg2Rad)) * radius;
 			pointA = center + radialDir;
 			Debug.DrawLine(pointA, pointB, Color.red, 100);
-			var size = angle / segments * Mathf.Deg2Rad * radius * 1.05f;
 
 			if (active)
 			{
-
 				var newPlatform = Instantiate(platformPrefab, (pointB + pointA) / 2f, Quaternion.LookRotation(backgroundDir, (radialDir+previousRadialDir)/2f));
 				foreach (var item in newPlatform.GetComponentsInChildren<MeshRenderer>())
 				{
@@ -135,22 +133,23 @@ public class TrackSpawner : MonoBehaviour {
 			}
 		}
 
-		if (!active && previouslyActive)
-		{
-			var newPlatform = Instantiate(platformEndPrefab, startPoint, transform.rotation);
-			foreach (var item in newPlatform.GetComponentsInChildren<MeshRenderer>())
-			{
-				item.material = material;
-			}
-		}
-
 		Vector3 endPoint = pointA;
 
-		transform.position = endPoint;
+		//TRACK END
+		if (previouslyActive && !active)
+		{
+			var newPlatform = Instantiate(platformEndPrefab, transform.position, transform.rotation);
+			foreach (var item in newPlatform.GetComponentsInChildren<MeshRenderer>())
+			{
+				item.material = material;
+			}
+		}
 
+		transform.position = endPoint;
 		transform.LookAt(transform.position + backgroundDir, center - pointA);
 
-		if (active && !previouslyActive)
+		//TRACK START
+		if (!previouslyActive && active)
 		{
 			var newPlatform = Instantiate(platformEndPrefab, startPoint, transform.rotation);
 			foreach (var item in newPlatform.GetComponentsInChildren<MeshRenderer>())
@@ -158,5 +157,9 @@ public class TrackSpawner : MonoBehaviour {
 				item.material = material;
 			}
 		}
+
+		//DRAW RADIUS
+		//Debug.DrawLine(center, startPoint, Color.yellow, 100);
+		//Debug.DrawLine(center, endPoint, Color.yellow, 100);
 	}
 }
