@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using DG.Tweening;
-
+using System;
 
 public class PlayerController : MonoBehaviour {
 	
@@ -30,6 +30,8 @@ public class PlayerController : MonoBehaviour {
 	private AudioSource aus;
 	public float maxAngularSpeed;
 	private bool grounded;
+
+	float currentSize = 0.5f;
 
 	private void Awake()
 	{
@@ -106,27 +108,55 @@ public class PlayerController : MonoBehaviour {
 		}
 	}
 
-	void ChangeRail(int direction) {
+	void ChangeRail(int direction)
+	{
 		float maxUp = 3f;
-		float maxDist = 10f;
-		Ray ray = new Ray(transform.position + Vector3.forward * 2 * direction + Vector3.up * maxUp, Vector3.down);
+		float maxDist = 6f;
+		var saveSpeed = rb.velocity;
+		var saveAngular = rb.angularVelocity;
+		int dist = 2;
+		float forwardLook = 1.5f;
+
+		Ray ray = new Ray(transform.position + Vector3.forward * dist * direction + Vector3.up * maxUp + Vector3.right * (forwardLook), Vector3.down);
 		RaycastHit hit;
 		bool success = Physics.Raycast(ray, out hit, maxDist);
-		Debug.DrawLine(ray.origin, success ? hit.point : ray.origin+ ray.direction*maxDist, success ? Color.green : Color.cyan, 100);
-
+		
 		Vector3 landingSpot = Vector3.zero;
 		if (success)
 		{
 			landingSpot = hit.point;
 		}
-		else {
-			landingSpot = transform.position + Vector3.forward * 2 * direction;
+		else
+		{
+			dist = 4;
+			ray = new Ray(transform.position + Vector3.forward * dist * direction + Vector3.up * maxUp + Vector3.right * (forwardLook), Vector3.down);
+			success = Physics.Raycast(ray, out hit, maxDist);
+			if (success)
+			{
+				landingSpot = hit.point;
+			}
+			else
+			{
+				dist = 6;
+				ray = new Ray(transform.position + Vector3.forward * dist * direction + Vector3.up * maxUp + Vector3.right * (forwardLook), Vector3.down);
+				success = Physics.Raycast(ray, out hit, maxDist);
+				if (success)
+				{
+					landingSpot = hit.point;
+				}
+			}
 		}
+
+		if (!success)
+		{
+			landingSpot = transform.position + Vector3.forward * 2 * direction;
+			dist = 2;
+		}
+
+		Debug.DrawLine(transform.position, landingSpot, success ? Color.green : Color.red, 100);
 
 		readyToRailChange = false;
 		grounded = false;
-		var saveSpeed = rb.velocity;
-		var saveAngular = rb.angularVelocity;
 		rb.isKinematic = true;
 		railStatus = RailStatus.Jumping;
 		aus.clip = Jump;
@@ -143,15 +173,23 @@ public class PlayerController : MonoBehaviour {
 		var sequence = DOTween.Sequence();
 		sequence.Append(transform.DOMoveY(apexHeight, jumpUpTime).SetEase(Ease.OutQuad));
 		sequence.Append(transform.DOMoveY(landingSpot.y + 0.5f, jumpDownTime).SetEase(Ease.InQuad));
-		sequence.AppendCallback(() => rail -= direction);
+		sequence.AppendCallback(() => rail -= direction * (dist / 2));
 		sequence.AppendCallback(() => { rb.isKinematic = false; railStatus = RailStatus.OnTrack; });
 		sequence.AppendCallback(() => { rb.velocity = saveSpeed + Vector3.down * fallSpeed; rb.angularVelocity = saveAngular; });
-		sequence.Insert(0, transform.DOMoveZ(2f * direction, jumpTime).SetEase(Ease.InOutQuad).SetRelative(true));
+		sequence.Insert(0, transform.DOMoveZ(dist * direction, jumpTime).SetEase(Ease.InOutQuad).SetRelative(true));
 		sequence.Insert(0, transform.DORotate(Vector3.right * 180f * direction, jumpTime, RotateMode.WorldAxisAdd).SetEase(Ease.OutBack).SetRelative(true));
-		sequence.Insert(0, transform.DOMoveX(transform.position.x + jumpTime * saveSpeed.x, jumpTime).SetEase(Ease.Linear));
-		
+		sequence.Insert(0, transform.DOMoveX(landingSpot.x, jumpTime).SetEase(Ease.Linear));
+
 	}
-	
+
+	public void Grow()
+	{
+		currentSize += 0.1f;
+
+		transform.DOScaleX(currentSize, 0.3f).SetEase(Ease.OutBack);
+		transform.DOScaleY(currentSize, 0.3f).SetEase(Ease.OutBack);
+	}
+
 	void Kill() {
 		alive=false;
 		aus.clip=Death;

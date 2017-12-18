@@ -103,7 +103,7 @@ public class TrackSpawner : MonoBehaviour {
 			previousRadialDir = radialDir;
 			radialDir = (forward * Mathf.Sin(alpha * angle * Mathf.Deg2Rad) + sign * up * Mathf.Cos(alpha * angle * Mathf.Deg2Rad)) * radius;
 			pointA = center + radialDir;
-			Debug.DrawLine(pointA, pointB, Color.red, 100);
+			//Debug.DrawLine(pointA, pointB, Color.red, 100);
 
 			if (active)
 			{

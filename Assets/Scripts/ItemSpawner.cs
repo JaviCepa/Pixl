@@ -7,6 +7,8 @@ public class ItemSpawner : MonoBehaviour {
 	public GameObject coinPrefab;
 	public GameObject obstaclePrefab;
 
+	public int secondsBetweenSpawns=5;
+
 	int currentTime = 0;
 
 	void Start ()
@@ -16,9 +18,12 @@ public class ItemSpawner : MonoBehaviour {
 	
 	void Update ()
 	{
-		if (GameManager.gameStart) {
-			if (currentTime != Mathf.FloorToInt(Time.timeSinceLevelLoad)) {
-				currentTime = Mathf.FloorToInt(Time.timeSinceLevelLoad);
+		if (GameManager.gameStart)
+		{
+			//var progress = Time.timeSinceLevelLoad;
+			var progress = transform.position.x;
+			if (currentTime != Mathf.FloorToInt(progress / secondsBetweenSpawns)) {
+				currentTime = Mathf.FloorToInt(progress / secondsBetweenSpawns);
 				Spawn();
 			}
 		}
@@ -39,9 +44,12 @@ public class ItemSpawner : MonoBehaviour {
 
 		var spawnPosition = transform.position + Vector3.up * 10 + Vector3.forward * laneDepth;
 
-		if (Random.value > 0.5f) {
+		if (Random.value > 0.9f)
+		{
 			var newObject = Instantiate(obstaclePrefab, spawnPosition, Quaternion.identity);
-		} else {
+		}
+		else
+		{
 			Instantiate(coinPrefab, spawnPosition, Quaternion.identity);
 		}
 

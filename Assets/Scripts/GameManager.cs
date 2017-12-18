@@ -31,6 +31,9 @@ public class GameManager : MonoBehaviour {
 	
 	void Update ()
 	{
+
+		if (Input.GetKeyDown(KeyCode.Escape)) { Application.LoadLevel("Main"); }
+
 		var t=Time.realtimeSinceStartup;
 		
 		if (Input.anyKeyDown && !gameStart)

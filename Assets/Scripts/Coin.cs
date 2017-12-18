@@ -15,8 +15,14 @@ public class Coin : MonoBehaviour {
 
 	void OnTriggerEnter(Collider collider)
 	{
-		aus.clip = coinSound;
-		aus.Play();
-		Destroy(gameObject);
+		//aus.clip = coinSound;
+		//aus.Play();
+		var targetPlayer = collider.gameObject.GetComponent<PlayerController>();
+
+		if (targetPlayer != null)
+		{
+			targetPlayer.Grow();
+			Destroy(gameObject);
+		}
 	}
 }
