@@ -10,8 +10,6 @@ public class PlayerController : MonoBehaviour {
 
 	private bool   alive = true;
 	private bool   readyToRailChange = false;
-
-	public  GameObject fader;
 	
 	public KeyCode railLeftKey;
 	public KeyCode railRightKey;
@@ -21,20 +19,27 @@ public class PlayerController : MonoBehaviour {
 	public AudioClip Coin, Death, Jump, Poc;
 
 	public float power=700;
-	public float airPower=50;
+	public float initialRunSpeed=0;
+	public float runAcceleration = 0.01f;
 	public float fallSpeed=10;
 	public float jumpPower=10;
-	public float jumpBoost=1;
+	public float jumpBoost=1.2f;
 
 	private Rigidbody rb;
 	private AudioSource aus;
 	public float maxAngularSpeed;
 	private bool grounded;
 
+	public GameObject squaredBody;
+	public GameObject roundedBody;
+
 	float currentSize = 0.5f;
 	[HideInInspector]public bool isAlive = true;
+	private float roundedTimer;
+	private bool playing;
 
-	float forwardLook { get { return 1f + 4f * CameraMovement.currentCameraSpeed; } }
+	float currentSpeed { get { return (Mathf.Max(0, initialRunSpeed + (Time.time-GameManager.gameStartTime) * runAcceleration)) * (isRounded ? 2f : 1f); } }
+	bool isRounded { get { return roundedTimer>0; } }
 
 	private void Awake()
 	{
@@ -42,10 +47,47 @@ public class PlayerController : MonoBehaviour {
 		rb.useGravity = false;
 		aus = GetComponent<AudioSource>();
 		rb.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
+		playing = false;
+	}
+
+	private void Start()
+	{
+		SetSquared();
+	}
+
+	public void SetSquared() {
+		squaredBody.SetActive(true);
+		roundedBody.SetActive(false);
+	}
+
+	public void SetRounded()
+	{
+		squaredBody.SetActive(false);
+		roundedBody.SetActive(true);
+		roundedTimer = 5;
+	}
+
+	private void Update()
+	{
+		if (roundedTimer>0)
+		{
+			roundedTimer -= Time.deltaTime;
+			if (roundedTimer<=0)
+			{
+				roundedTimer = 0;
+				SetSquared();
+			}
+		}
+
 	}
 
 	void FixedUpdate ()
 	{
+		if (!playing && (Input.GetKeyDown(accelKey) || Input.GetKeyDown(brakeKey) || Input.GetKeyDown(railLeftKey) || Input.GetKeyDown(railRightKey))) {
+			playing = true;
+			GameManager.StartGame();
+		}
+
 		if (GameManager.isGameRunning)
 		{
 			rb.useGravity = true;
@@ -53,7 +95,7 @@ public class PlayerController : MonoBehaviour {
 
 			if (Input.GetKeyDown(accelKey) && alive && grounded && railStatus == RailStatus.OnTrack && rb.velocity.y < jumpPower*0.5f)
 			{
-				rb.velocity += new Vector3(jumpBoost * forwardLook, jumpPower, 0);
+				rb.velocity += new Vector3(rb.velocity.x*jumpBoost+0.2f, jumpPower, 0);
 				grounded = false;
 				aus.clip = Jump;
 				aus.Play();
@@ -69,9 +111,8 @@ public class PlayerController : MonoBehaviour {
 				ChangeRail(-1);
 			};
 
-			if (!Input.GetKey(brakeKey) && alive) {
-				rb.AddForce(airPower * CameraMovement.currentCameraSpeed, 0, 0);
-				rb.AddTorque(0, 0, -power*transform.localScale.x*2f);
+			if (!Input.GetKey(brakeKey) && alive && playing) {
+				rb.AddTorque(0, 0, -power*transform.localScale.x*2f* currentSpeed);
 			};
 		}
 		
@@ -113,7 +154,8 @@ public class PlayerController : MonoBehaviour {
 		var saveSpeed = rb.velocity;
 		var saveAngular = rb.angularVelocity;
 		int dist = 2;
-		Debug.Log(CameraMovement.currentCameraSpeed);
+
+		float forwardLook = rb.velocity.x * 1f;
 
 		Ray ray = new Ray(transform.position + Vector3.forward * dist * direction + Vector3.up * maxUp + Vector3.right * (forwardLook), Vector3.down);
 		RaycastHit hit;
@@ -173,7 +215,7 @@ public class PlayerController : MonoBehaviour {
 		sequence.Append(transform.DOMoveY(landingSpot.y + 0.5f, jumpDownTime).SetEase(Ease.InQuad));
 		sequence.AppendCallback(() => rail -= direction * (dist / 2));
 		sequence.AppendCallback(() => { rb.isKinematic = false; railStatus = RailStatus.OnTrack; });
-		sequence.AppendCallback(() => { rb.velocity = saveSpeed + Vector3.down * fallSpeed; rb.angularVelocity = saveAngular; });
+		sequence.AppendCallback(() => { rb.velocity = Vector3.right*saveSpeed.x + Vector3.down * fallSpeed; rb.angularVelocity = saveAngular; });
 		sequence.Insert(0, transform.DOMoveZ(dist * direction, jumpTime).SetEase(Ease.OutQuad).SetRelative(true));
 		sequence.Insert(0, transform.DORotate(Vector3.right * 180f * direction, jumpTime, RotateMode.WorldAxisAdd).SetEase(Ease.OutBack).SetRelative(true));
 		sequence.Insert(0, transform.DOMoveX(landingSpot.x, jumpTime).SetEase(Ease.Linear));

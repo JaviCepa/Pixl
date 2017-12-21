@@ -17,10 +17,11 @@ public class Coin : MonoBehaviour {
 	{
 		//aus.clip = coinSound;
 		//aus.Play();
-		var targetPlayer = collider.gameObject.GetComponent<PlayerController>();
+		var targetPlayer = collider.gameObject.GetComponentInParent<PlayerController>();
 
 		if (targetPlayer != null)
 		{
+			targetPlayer.SetRounded();
 			targetPlayer.Grow();
 			Destroy(gameObject);
 		}

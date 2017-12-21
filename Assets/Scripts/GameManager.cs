@@ -28,19 +28,21 @@ public class GameManager : MonoBehaviour {
 		distance=0;
 	}
 	
+	public static void StartGame()
+	{
+		if (!isGameRunning)
+		{
+			var t=Time.time;
+			isGameRunning = true;
+			gameStartTime = t;
+		}
+	}
+
 	void Update ()
 	{
 
 		if (Input.GetKeyDown(KeyCode.Escape)) { RestartGame(); }
-
-		var t=Time.realtimeSinceStartup;
 		
-		if (Input.anyKeyDown && !isGameRunning)
-		{
-			isGameRunning=true;
-			gameStartTime=t;
-		};
-
 		distance = Mathf.Max(Camera.main.transform.position.x + 42f, 0);
 
 		if (distance - 22 > record)

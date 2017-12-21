@@ -12,7 +12,7 @@ public class LaneColor : MonoBehaviour {
 
 	public bool runOnStart=true;
 
-	void Start ()
+	void Awake ()
 	{
 		if (runOnStart)
 		{

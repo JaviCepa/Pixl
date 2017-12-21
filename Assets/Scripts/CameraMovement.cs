@@ -11,22 +11,20 @@ public class CameraMovement : MonoBehaviour {
 	public float startX=0;
 	public float cameraAcceleration=0.05f;
 	public float offsetX;
-	public float maxOffsetX=-12f;
 
 	float cameraTime=0;
 	float offsetY;
 
-	float previousX;
-
-	public static float currentCameraSpeed { get { return (instance.offsetX - instance.startPosition.x) / (instance.maxOffsetX - instance.startPosition.x); } }
-
 	static CameraMovement instance;
+
+	Vector3 targetPosition;
+
+	public static bool shouldFollow {get { return instance.targetPosition.x > instance.startX; } }
 
 	void Awake()
 	{
 		instance = this;
 		startPosition = transform.position;
-		previousX = startPosition.x;
 		offsetX = startPosition.x;
 		offsetY = startPosition.y;
 		playerControllers = FindObjectsOfType<PlayerController>();
@@ -36,8 +34,6 @@ public class CameraMovement : MonoBehaviour {
 	{
 		if (GameManager.isGameRunning)
 		{
-			previousX = transform.position.x;
-
 			cameraTime += Time.deltaTime;
 			Vector3 average = Vector3.zero;
 			float count = 0;
@@ -73,15 +69,10 @@ public class CameraMovement : MonoBehaviour {
 					weightedAverage = average;
 				}
 
-				var targetPosition = new Vector3(weightedAverage.x + offsetX, weightedAverage.y + offsetY, startPosition.z);
+				targetPosition = new Vector3(weightedAverage.x + offsetX, weightedAverage.y + offsetY, startPosition.z);
 				var error = targetPosition - transform.position;
-				if (targetPosition.x > startX)
+				if (shouldFollow)
 				{
-					float speedFactor = 1f - (GameManager.GetCurrentPlayers()-1f)/4f;
-					if (offsetX<maxOffsetX)
-					{
-						offsetX += 0.3f * speedFactor * Time.deltaTime; // Increase difficulty over time
-					}
 					transform.position += error * cameraAcceleration;
 				}
 			}
