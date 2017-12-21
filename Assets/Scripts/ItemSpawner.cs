@@ -18,7 +18,7 @@ public class ItemSpawner : MonoBehaviour {
 	
 	void Update ()
 	{
-		if (GameManager.gameStart)
+		if (GameManager.isGameRunning)
 		{
 			//var progress = Time.timeSinceLevelLoad;
 			var progress = transform.position.x;
@@ -46,7 +46,7 @@ public class ItemSpawner : MonoBehaviour {
 
 		if (Random.value > 0.9f)
 		{
-			var newObject = Instantiate(obstaclePrefab, spawnPosition, Quaternion.identity);
+			Instantiate(obstaclePrefab, spawnPosition, Quaternion.identity);
 		}
 		else
 		{

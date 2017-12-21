@@ -9,7 +9,6 @@ public class PlayerController : MonoBehaviour {
 	public int rail=2;
 
 	private bool   alive = true;
-	private int    playerScore=0;
 	private bool   readyToRailChange = false;
 
 	public  GameObject fader;
@@ -33,6 +32,9 @@ public class PlayerController : MonoBehaviour {
 	private bool grounded;
 
 	float currentSize = 0.5f;
+	[HideInInspector]public bool isAlive = true;
+
+	float forwardLook { get { return 1f + 4f * CameraMovement.currentCameraSpeed; } }
 
 	private void Awake()
 	{
@@ -44,14 +46,14 @@ public class PlayerController : MonoBehaviour {
 
 	void FixedUpdate ()
 	{
-		if (GameManager.gameStart)
+		if (GameManager.isGameRunning)
 		{
 			rb.useGravity = true;
 			rb.maxAngularVelocity = maxAngularSpeed;
 
 			if (Input.GetKeyDown(accelKey) && alive && grounded && railStatus == RailStatus.OnTrack && rb.velocity.y < jumpPower*0.5f)
 			{
-				rb.velocity += new Vector3(jumpBoost, jumpPower, 0);
+				rb.velocity += new Vector3(jumpBoost * forwardLook, jumpPower, 0);
 				grounded = false;
 				aus.clip = Jump;
 				aus.Play();
@@ -68,7 +70,7 @@ public class PlayerController : MonoBehaviour {
 			};
 
 			if (!Input.GetKey(brakeKey) && alive) {
-				rb.AddForce(airPower, 0, 0);
+				rb.AddForce(airPower * CameraMovement.currentCameraSpeed, 0, 0);
 				rb.AddTorque(0, 0, -power*transform.localScale.x*2f);
 			};
 		}
@@ -111,7 +113,7 @@ public class PlayerController : MonoBehaviour {
 		var saveSpeed = rb.velocity;
 		var saveAngular = rb.angularVelocity;
 		int dist = 2;
-		float forwardLook = 1.5f;
+		Debug.Log(CameraMovement.currentCameraSpeed);
 
 		Ray ray = new Ray(transform.position + Vector3.forward * dist * direction + Vector3.up * maxUp + Vector3.right * (forwardLook), Vector3.down);
 		RaycastHit hit;
@@ -190,7 +192,6 @@ public class PlayerController : MonoBehaviour {
 		alive=false;
 		aus.clip=Death;
 		aus.Play();
-		GameManager.killCount++;
 	}
 	
 	void OnCollisionEnter(Collision collision)

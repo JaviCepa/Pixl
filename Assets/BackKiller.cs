@@ -6,6 +6,15 @@ public class BackKiller : MonoBehaviour {
 
 	public LayerMask mask;
 
+	public TextMesh distanceTextMesh;
+
+	public float offsetX=0;
+
+	private void Update()
+	{
+		distanceTextMesh.text = Mathf.RoundToInt(transform.position.x + offsetX).ToString();
+	}
+
 	void LateUpdate ()
 	{
 		Ray ray = new Ray(transform.position+Vector3.up*100, Vector3.down);

@@ -26,6 +26,8 @@ public class TrackSpawner : MonoBehaviour {
 
 	bool active = true;
 
+	static float dissapearHeight = -2;
+
 	private void Start()
 	{
 		maxAngle = Random.Range(15f, 45f);
@@ -50,7 +52,7 @@ public class TrackSpawner : MonoBehaviour {
 	void GenerateTrack(float radius, float angle)
 	{
 		var previouslyActive = active;
-		active = (transform.position.y >= -3);
+		active = (transform.position.y >= dissapearHeight);
 		if (Random.value < 0.05f) { active = false; } //Make some segments randomly dissapear
 
 		Vector3 centerUp = transform.position - up * radius;

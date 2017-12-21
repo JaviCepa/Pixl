@@ -1,61 +1,77 @@
 using UnityEngine;
 using System.Collections;
+using System;
 
 public class GameManager : MonoBehaviour {
 	
-	public GameObject scoreDisplay;
 	public GameObject recordDisplay;
 	
 	static public bool gravitySwitch;
-	static public bool gameStart;
+	static public bool isGameRunning;
 	
 	static public float gameStartTime;
 	static public float levelSpeed;
 	
-	static public int killCount=0;
 	static public float record=0;
 	
 	public float distance=0;
 
-	public float currentPlayers=5;
+	static PlayerController[] players;
 
 	void Start ()
 	{
-		killCount=0;
+		players = FindObjectsOfType<PlayerController>();
 		gravitySwitch=false;
 		Time.timeScale=1f;
 		levelSpeed=0.0f;
-		gameStart=false;
+		isGameRunning=false;
 		distance=0;
 	}
 	
 	void Update ()
 	{
 
-		if (Input.GetKeyDown(KeyCode.Escape)) { Application.LoadLevel("Main"); }
+		if (Input.GetKeyDown(KeyCode.Escape)) { RestartGame(); }
 
 		var t=Time.realtimeSinceStartup;
 		
-		if (Input.anyKeyDown && !gameStart)
+		if (Input.anyKeyDown && !isGameRunning)
 		{
-			gameStart=true;
+			isGameRunning=true;
 			gameStartTime=t;
 		};
 
 		distance = Mathf.Max(Camera.main.transform.position.x + 42f, 0);
 
-		if (distance > record)
+		if (distance - 22 > record)
 		{
-			record = distance;
+			record = distance - 22;
 		}
 
-		if (killCount >= currentPlayers) {
-			UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
-			GameManager.gameStart=false;
-			killCount=0;
+		if (GetCurrentPlayers()==0 && isGameRunning) {
+			isGameRunning = false;
+			Invoke("RestartGame", 1f);
 		}
 		
-		scoreDisplay.GetComponent<TextMesh>().text="Distance: "+Mathf.Floor(distance);
-		recordDisplay.GetComponent<TextMesh>().text="Record: "+Mathf.Floor(record);
+		recordDisplay.GetComponent<TextMesh>().text="Previous record:\n"+Mathf.Floor(record);
+	}
+
+	void RestartGame()
+	{
+		UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
+	}
+
+	public static int GetCurrentPlayers()
+	{
+		int count = 0;
+
+		for (int i = 0; i < players.Length; i++)
+		{
+			if (players[i] != null) {
+				count++;
+			}
+		}
+
+		return count;
 	}
 }

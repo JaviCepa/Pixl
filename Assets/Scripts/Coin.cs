@@ -6,11 +6,11 @@ public class Coin : MonoBehaviour {
 
 	public AudioClip coinSound;
 
-	AudioSource aus;
+	//AudioSource aus;
 
 	void Start()
 	{
-		aus = GetComponent<AudioSource>();
+		//aus = GetComponent<AudioSource>();
 	}
 
 	void OnTriggerEnter(Collider collider)
