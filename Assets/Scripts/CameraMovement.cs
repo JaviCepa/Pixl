@@ -11,6 +11,10 @@ public class CameraMovement : MonoBehaviour {
 	float offsetX, offsetY;
 	public float cameraSpeed=0.05f;
 
+	float cameraTime=0;
+
+	public float startX=0;
+
 	void Awake()
 	{
 		startPosition = transform.position;
@@ -23,6 +27,7 @@ public class CameraMovement : MonoBehaviour {
 	{
 		if (GameManager.gameStart)
 		{
+			cameraTime += Time.deltaTime;
 			Vector3 average = Vector3.zero;
 			float count = 0;
 			for (int i = 0; i < playerControllers.Length; i++)
@@ -59,7 +64,9 @@ public class CameraMovement : MonoBehaviour {
 
 				var targetPosition = new Vector3(weightedAverage.x + offsetX, weightedAverage.y + offsetY, startPosition.z);
 				var error = targetPosition - transform.position;
-				transform.position += error * cameraSpeed;
+				if (targetPosition.x > startX) {
+					transform.position += error * cameraSpeed;
+				}
 			}
 		}
 	}

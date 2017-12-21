@@ -25,6 +25,7 @@ public class PlayerController : MonoBehaviour {
 	public float airPower=50;
 	public float fallSpeed=10;
 	public float jumpPower=10;
+	public float jumpBoost=1;
 
 	private Rigidbody rb;
 	private AudioSource aus;
@@ -50,7 +51,7 @@ public class PlayerController : MonoBehaviour {
 
 			if (Input.GetKeyDown(accelKey) && alive && grounded && railStatus == RailStatus.OnTrack && rb.velocity.y < jumpPower*0.5f)
 			{
-				rb.velocity += new Vector3(0, jumpPower, 0);
+				rb.velocity += new Vector3(jumpBoost, jumpPower, 0);
 				grounded = false;
 				aus.clip = Jump;
 				aus.Play();
@@ -65,13 +66,8 @@ public class PlayerController : MonoBehaviour {
 			{
 				ChangeRail(-1);
 			};
-			
-			//if (Input.GetKey(brakeKey) && alive) {
-			//	rb.AddForce(-airPower, 0, 0);
-			//	rb.AddTorque(0, 0, +power);
-			//};
 
-			if (alive) {
+			if (!Input.GetKey(brakeKey) && alive) {
 				rb.AddForce(airPower, 0, 0);
 				rb.AddTorque(0, 0, -power*transform.localScale.x*2f);
 			};
@@ -176,7 +172,7 @@ public class PlayerController : MonoBehaviour {
 		sequence.AppendCallback(() => rail -= direction * (dist / 2));
 		sequence.AppendCallback(() => { rb.isKinematic = false; railStatus = RailStatus.OnTrack; });
 		sequence.AppendCallback(() => { rb.velocity = saveSpeed + Vector3.down * fallSpeed; rb.angularVelocity = saveAngular; });
-		sequence.Insert(0, transform.DOMoveZ(dist * direction, jumpTime).SetEase(Ease.InOutQuad).SetRelative(true));
+		sequence.Insert(0, transform.DOMoveZ(dist * direction, jumpTime).SetEase(Ease.OutQuad).SetRelative(true));
 		sequence.Insert(0, transform.DORotate(Vector3.right * 180f * direction, jumpTime, RotateMode.WorldAxisAdd).SetEase(Ease.OutBack).SetRelative(true));
 		sequence.Insert(0, transform.DOMoveX(landingSpot.x, jumpTime).SetEase(Ease.Linear));
 

@@ -10,23 +10,45 @@ public class LaneColor : MonoBehaviour {
 	public Material leftmostLaneMaterial;
 	public Material rightmostLaneMaterial;
 
-	void Start () {
-		switch (Mathf.RoundToInt(transform.position.z))
+	public bool runOnStart=true;
+
+	void Start ()
+	{
+		if (runOnStart)
 		{
-			case 0: SetMaterial(centralLaneMaterial); break;
-			case 2: SetMaterial(leftLaneMaterial); break;
-			case -2: SetMaterial(rightLaneMaterial); break;
-			case 4: SetMaterial(leftmostLaneMaterial); break;
-			case -4: SetMaterial(rightmostLaneMaterial); break;
-			default:
+			switch (Mathf.RoundToInt(transform.position.z))
+			{
+				case 0: SetMaterial(centralLaneMaterial); break;
+				case 2: SetMaterial(leftLaneMaterial); break;
+				case -2: SetMaterial(rightLaneMaterial); break;
+				case 4: SetMaterial(leftmostLaneMaterial); break;
+				case -4: SetMaterial(rightmostLaneMaterial); break;
+				default:
 				break;
+			}
 		}
 	}
 	
-	void SetMaterial(Material mat) {
+	void SetMaterial(Material mat)
+	{
 		foreach (var item in GetComponentsInChildren<MeshRenderer>())
 		{
 			item.material = mat;
+		}
+
+		var particles = GetComponentInChildren<ParticleSystem>();
+		if (particles!=null)
+		{
+			GetComponent<Renderer>().material=mat;
+		}
+	}
+
+	void HitPlayer(PlayerController player)
+	{
+		var particles = GetComponentInChildren<ParticleSystem>();
+		if (particles != null)
+		{
+			GetComponent<Renderer>().material = player.GetComponent<Renderer>().material;
 		}
 	}
 }
