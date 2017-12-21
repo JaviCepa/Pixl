@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System;
+using DG.Tweening;
 
 public class GameManager : MonoBehaviour {
 	
@@ -17,6 +18,8 @@ public class GameManager : MonoBehaviour {
 	public float distance=0;
 
 	static PlayerController[] players;
+
+	public DOTweenAnimation fader;
 
 	void Start ()
 	{
@@ -59,6 +62,12 @@ public class GameManager : MonoBehaviour {
 	}
 
 	void RestartGame()
+	{
+		fader.GetComponent<UnityEngine.UI.Image>().DOFade(1f, 0.2f);
+		Invoke("ReloadLevel", 0.3f);
+	}
+
+	void ReloadLevel()
 	{
 		UnityEngine.SceneManagement.SceneManager.LoadScene("Main");
 	}
